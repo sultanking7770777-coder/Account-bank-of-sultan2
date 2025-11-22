@@ -8,3 +8,173 @@
   <p>مشروع حساب البنك …</p>
 </body>
 </html>
+<!doctype html>
+<html lang="ar">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>فتح حساب — Bank of Sultan (نموزج)</title>
+  <style>
+    :root{
+      --bg:#f4f7fb; --card:#ffffff; --accent:#0b63d6; --muted:#6b7280;
+      --danger:#d9534f;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+    }
+    body{background:var(--bg); margin:0; padding:24px; direction:rtl; color:#0f1724;}
+    .wrap{max-width:900px; margin:18px auto; padding:20px;}
+    .card{background:var(--card); border-radius:12px; box-shadow:0 6px 24px rgba(12,20,40,0.06); padding:22px;}
+    h1{margin:0 0 10px; font-size:20px}
+    p.lead{color:var(--muted); margin:6px 0 18px}
+    form{display:grid; gap:12px;}
+    .grid{display:grid; grid-template-columns:repeat(2,1fr); gap:12px;}
+    label{font-size:13px; color:#111827; display:block; margin-bottom:6px}
+    input[type="text"], input[type="tel"], input[type="file"], select, textarea{
+      width:100%; padding:10px 12px; border-radius:8px; border:1px solid #e6e9ef; box-sizing:border-box;
+      background:#fff; font-size:14px;
+    }
+    textarea{min-height:80px; resize:vertical}
+    .full{grid-column:1/-1}
+    .actions{display:flex; gap:10px; align-items:center; margin-top:6px}
+    button{background:var(--accent); color:#fff; border:0; padding:10px 14px; border-radius:8px; cursor:pointer}
+    button.secondary{background:#e6eefc; color:var(--accent)}
+    .hint{font-size:13px; color:var(--muted)}
+    .error{color:var(--danger); font-size:13px}
+    @media(max-width:720px){ .grid{grid-template-columns:1fr} }
+  </style>
+</head>
+<body>
+  <div class="wrap card">
+    <h1>نموذج فتح حساب — Bank of Sultan</h1>
+    <p class="lead">عبي البيانات تحت بدقّة. الحقول الموسومة ضرورية.</p>
+
+    <form id="accountForm" novalidate>
+      <div class="grid">
+        <div>
+          <label for="accountNumber">رقم الحساب (7 أرقام) *</label>
+          <input id="accountNumber" name="accountNumber" type="tel" inputmode="numeric" pattern="\\d{7}" placeholder="مثال: 1234567" required>
+          <div class="hint">أرقام فقط، 7 خانات.</div>
+        </div>
+
+        <div>
+          <label for="refNumber">الرقم المرجعي (16 رقم) *</label>
+          <input id="refNumber" name="refNumber" type="tel" inputmode="numeric" pattern="\\d{16}" placeholder="مثال: 1234567890123456" required>
+          <div class="hint">رقم مرجعي مكوّن من 16 رقم.</div>
+        </div>
+
+        <div class="full">
+          <label for="fullName">الاسم الكامل *</label>
+          <input id="fullName" name="fullName" type="text" required placeholder="الاسم كما في البطاقة">
+        </div>
+
+        <div>
+          <label for="accountType">نوع الحساب *</label>
+          <select id="accountType" name="accountType" required>
+            <option value="">اختر نوع الحساب</option>
+            <option>حساب توفير</option>
+            <option>توفير مميّز</option>
+            <option>حساب جاري</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="branch">الفرع</label>
+          <select id="branch" name="branch">
+            <option value="">اختر الفرع</option>
+            <option>الخرطوم — الرئيسي</option>
+            <option>بحري</option>
+            <option>أم درمان</option>
+            <option>ريب/فرع تجريبي</option>
+          </select>
+        </div>
+
+        <div class="full">
+          <label for="idUpload">صورة جواز السفر أو البطاقة الوطنية *</label>
+          <input id="idUpload" name="idUpload" type="file" accept="image/*,application/pdf" required>
+          <div class="hint">مسموح JPG, PNG, PDF — الحجم الأقل من 5MB.</div>
+        </div>
+
+        <div class="full">
+          <label for="notes">ملاحظات (اختياري)</label>
+          <textarea id="notes" name="notes" placeholder="مثلاً: سبب فتح الحساب، بيانات إضافية"></textarea>
+        </div>
+      </div>
+
+      <div class="actions full">
+        <button type="submit">إرسال الطلب</button>
+        <button type="button" class="secondary" id="resetBtn">إعادة ضبط</button>
+        <div style="margin-left:auto" id="formMessage" aria-live="polite"></div>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    // قيود بسيطة على العميل (client-side validation) + محاولة إرسال عبر fetch لو احتجت
+    const form = document.getElementById('accountForm');
+    const msg = document.getElementById('formMessage');
+    const resetBtn = document.getElementById('resetBtn');
+
+    function showError(text, isError=true){
+      msg.textContent = text;
+      msg.className = isError ? 'error' : 'hint';
+    }
+
+    resetBtn.addEventListener('click', ()=> {
+      form.reset();
+      msg.textContent = '';
+    });
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      msg.textContent = '';
+
+      // تحقق رقمي
+      const acc = document.getElementById('accountNumber');
+      const ref = document.getElementById('refNumber');
+      const idFile = document.getElementById('idUpload');
+
+      if(!/^\d{7}$/.test(acc.value.trim())) return showError('رقم الحساب لازم 7 أرقام.');
+      if(!/^\d{16}$/.test(ref.value.trim())) return showError('الرقم المرجعي لازم 16 رقم.');
+      if(!idFile.files.length) return showError('لا بد من رفع صورة الهوية أو جواز السفر.');
+
+      // اجمع البيانات
+      const data = new FormData();
+      data.append('accountNumber', acc.value.trim());
+      data.append('referenceNumber', ref.value.trim());
+      data.append('fullName', document.getElementById('fullName').value.trim());
+      data.append('accountType', document.getElementById('accountType').value);
+      data.append('branch', document.getElementById('branch').value);
+      data.append('notes', document.getElementById('notes').value.trim());
+      data.append('idFile', idFile.files[0]);
+
+      // حالياً حنسكب الداتا للـ console عشان تتأكد منها.
+      // بعدين تقدر تستبدل الجزء دا ب fetch('https://your-api.example/endpoint', { method:'POST', body: data })
+      console.group('Account form submission');
+      for (let pair of data.entries()) {
+        if(pair[0] === 'idFile') {
+          console.log(pair[0], pair[1].name, pair[1].size + ' bytes');
+        } else {
+          console.log(pair[0], ':', pair[1]);
+        }
+      }
+      console.groupEnd();
+
+      showError('تم تجهيز البيانات محلياً في المتصفح. لو عايز أرسلها للـ API أعدل الكود.', false);
+
+      // مثال إرسال (معلق) — فكّ التعليق وحط الـ URL بتاع الـ API عندك
+      /*
+      try {
+        const res = await fetch('https://your-api.example/account/create', {
+          method: 'POST',
+          body: data
+        });
+        const j = await res.json();
+        if(res.ok) showError('تم استلام الطلب.', false);
+        else showError('فشل الإرسال: ' + (j.message || res.status));
+      } catch(err){
+        showError('خطأ في الشبكة: ' + err.message);
+      }
+      */
+    });
+  </script>
+</body>
+ </html>
